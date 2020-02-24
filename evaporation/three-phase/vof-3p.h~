@@ -1,0 +1,380 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    
+    
+    <title>Basilisk - sandbox/chizari/threephase/vof-3p.h</title>
+        <link href="/css/custom.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="/css/print.css" rel="stylesheet" media="print" type= "text/css" />
+    
+    <!--[if IE]><link href="/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
+    <link rel="stylesheet" href="/css/codemirror.css"/>
+    <link rel="stylesheet" href="/css/basilisk.css"/>
+    <link rel="stylesheet" href="/codemirror/addon/display/fullscreen.css"/>
+    <link rel="stylesheet" href="/codemirror/addon/fold/foldgutter.css" />
+    <script src="/codemirror/lib/codemirror.js"></script>
+    <script src="/codemirror/mode/clike/clike.js"></script>
+    <script src="/codemirror/mode/markdown/markdown.js"></script>
+    <script src="/codemirror/addon/display/fullscreen.js"></script>
+    <script src="/codemirror/addon/edit/matchbrackets.js"></script>
+    <script src="/codemirror/keymap/emacs.js"></script>
+    <script src="/codemirror/addon/comment/comment.js"></script>
+    <script src="/codemirror/addon/dialog/dialog.js"></script>
+    <script src="/codemirror/addon/search/searchcursor.js"></script>
+    <script src="/codemirror/addon/search/search.js"></script>
+
+    <script src="/codemirror/addon/fold/foldcode.js"></script>
+    <script src="/codemirror/addon/fold/foldgutter.js"></script>
+    <script src="/codemirror/addon/fold/brace-fold.js"></script>
+    <script src="/codemirror/addon/fold/xml-fold.js"></script>
+    <script src="/codemirror/addon/fold/markdown-fold.js"></script>
+    <script src="/codemirror/addon/fold/comment-fold.js"></script>
+  </head>
+  <body>
+    <div id="doc3" class="yui-t1">
+        <div id="yui-main">
+          <div id="maincol" class="yui-b">
+            <div id="userbox">
+  <noscript>
+    <a href="/_login">Login</a>
+    <a href="/_logout">Logout</a>
+  </noscript>
+  &nbsp;
+  <a id="loginlink" class="login" href="/_login">Login / Get an account</a>
+  <a id="logoutlink" class="login" href="/_logout">Logout <span id="logged_in_user"></span></a>
+</div>
+            <ul class="tabs"
+><li class="selected"
+  ><a href="/sandbox/chizari/threephase/vof-3p.h"
+    >view</a
+    ></li
+  ><li
+  ><a href="/_edit/sandbox/chizari/threephase/vof-3p.h"
+    >edit</a
+    ></li
+  ><li
+  ><a href="/_history/sandbox/chizari/threephase/vof-3p.h"
+    >history</a
+    ></li
+  ><li
+  ><a href="/_discuss/sandbox/chizari/threephase/vof-3p.h"
+    >discuss</a
+    ></li
+  ></ul
+> 
+            <div id="content">
+  
+  <h1 class="pageTitle"><a href="/sandbox/chizari/threephase/vof-3p.h">sandbox/chizari/threephase/vof-3p.h</a></h1>
+      <ul class="messages">
+  
+</ul>
+  
+  <div id="wikipage"
+>
+<p>The <em>vof-3p.h</em> is basically same as <a href="http://basilisk.fr/src/vof.h">vof.h</a> here, the only difference is the fact that we are using the <a href="/sandbox/chizari/threephase/fractions-3p.h">fraction-3p.h</a> instead of <a href="/src/fraction.h">fraction.h</a> since the recustruction of the two-phase cells in the three-phase flow is modified. Therefore, the include of the fraction.h shall be modified to <em>fractions-3p.h</em> and the rest remains the same.</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec"><a href="/Basilisk%20C#field-attributes">attribute</a> {
+  <span class="dt">scalar</span> * tracers;
+  bool inverse;
+}
+
+<span class="ot">#include &quot;<a href="/src/fractions.h">fractions.h</a>&quot;</span>
+
+<span class="kw">extern</span> <span class="dt">scalar</span> * interfaces;
+<span class="kw">extern</span> <a href="/Basilisk%20C#face-and-vertex-fields">face</a> <span class="dt">vector</span> uf;
+<span class="kw">extern</span> <span class="dt">double</span> dt;
+
+<a href="/Basilisk%20C#events"><span class="dt">event</span></a> <a id="defaults">defaults</a> (i = <span class="dv">0</span>)
+{
+<span class="ot">#if TREE</span>
+  <span class="kw">for</span> (<span class="dt">scalar</span> c in interfaces)
+    c.refine = c.prolongation = <a href="/src/fractions.h#fraction_refine">fraction_refine</a>;
+<span class="ot">#endif</span>
+}
+
+<a href="/Basilisk%20C#events"><span class="dt">event</span></a> <a id="stability">stability</a> (i++) {
+  <span class="kw">if</span> (CFL &gt; <span class="fl">0.5</span>)
+    CFL = <span class="fl">0.5</span>;
+}
+
+<span class="kw">foreach_dimension</span>()
+<span class="dt">static</span> <span class="dt">void</span> <a id="sweep_x">sweep_x</a> (<span class="dt">scalar</span> c, <span class="dt">scalar</span> cc)
+{
+  <span class="dt">vector</span> n[];
+  <span class="dt">scalar</span> α[], flux[];
+  <span class="dt">double</span> cfl = <span class="dv">0</span>.;
+  <span class="dt">scalar</span> * tracers = c.tracers, * gfl = NULL, * tfluxl = NULL;
+  <span class="kw">if</span> (tracers) {
+    <span class="kw">for</span> (<span class="dt">scalar</span> t in tracers) {
+      <span class="dt">scalar</span> gf = new <span class="dt">scalar</span>, flux = new <span class="dt">scalar</span>;
+      gfl = list_append (gfl, gf);
+      tfluxl = list_append (tfluxl, flux);
+    }
+    <a href="/Basilisk%20C#iterators"><span class="kw">foreach</span></a>() {
+      <span class="dt">scalar</span> t, gf;
+      <span class="kw">for</span> (t,gf in tracers,gfl) {
+	<span class="dt">double</span> cl = c[-<span class="dv">1</span>], cc = c[], cr = c[<span class="dv">1</span>];
+	<span class="kw">if</span> (t.inverse)
+	  cl = <span class="dv">1</span>. - cl, cc = <span class="dv">1</span>. - cc, cr = <span class="dv">1</span>. - cr;
+	gf[] = <span class="dv">0</span>.;
+	<span class="dt">static</span> <span class="dt">const</span> <span class="dt">double</span> cmin = <span class="fl">0.5</span>;
+	<span class="kw">if</span> (cc &gt;= cmin) {
+	  <span class="kw">if</span> (cr &gt;= cmin) {
+	    <span class="kw">if</span> (cl &gt;= cmin) {
+	      <span class="kw">if</span> (t.gradient)
+		gf[] = t.gradient (t[-<span class="dv">1</span>]/cl, t[]/cc, t[<span class="dv">1</span>]/cr)/Δ;
+	      <span class="kw">else</span>
+		gf[] = (t[<span class="dv">1</span>]/cr - t[-<span class="dv">1</span>]/cl)/(<span class="dv">2</span>.*Δ);
+	    }
+	    <span class="kw">else</span>
+	       gf[] = (t[<span class="dv">1</span>]/cr - t[]/cc)/Δ;
+	  }
+	  <span class="kw">else</span> <span class="kw">if</span> (cl &gt;= cmin)
+	    gf[] = (t[]/cc - t[-<span class="dv">1</span>]/cl)/Δ;
+	}
+      }
+    }
+    <a href="/Basilisk%20C#boundary-conditions">boundary</a> (gfl);
+  }
+
+  <a href="/src/fractions.h#reconstruction">reconstruction</a> (c, n, α);
+  
+  <a href="/Basilisk%20C#foreach_face"><span class="kw">foreach_face</span></a>(x, <a href="/Basilisk%20C#parallel-programming">reduction</a> (max:cfl)) {
+
+    <span class="dt">double</span> un = uf.x[]*dt/(Δ*fm.x[]), s = sign(un);
+    <span class="dt">int</span> i = -(s + <span class="dv">1</span>.)/<span class="dv">2</span>.;
+
+    <span class="kw">if</span> (un*fm.x[]*s/cm[] &gt; cfl)
+      cfl = un*fm.x[]*s/cm[];
+
+    <span class="dt">double</span> cf = (c[i] &lt;= <span class="dv">0</span>. || c[i] &gt;= <span class="dv">1</span>.) ? c[i] :
+      <a href="/src/geometry.h#rectangle_fraction">rectangle_fraction</a> ((coord){-s*n.x[i], n.y[i], n.z[i]}, α[i],
+			  (coord){-<span class="fl">0.5</span>, -<span class="fl">0.5</span>, -<span class="fl">0.5</span>},
+			  (coord){s*un - <span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>});
+    
+    flux[] = cf*uf.x[];
+    
+    <span class="dt">scalar</span> t, gf, tflux;
+    <span class="kw">for</span> (t,gf,tflux in tracers,gfl,tfluxl) {
+      <span class="dt">double</span> cf1 = cf, ci = c[i];
+      <span class="kw">if</span> (t.inverse)
+	cf1 = <span class="dv">1</span>. - cf1, ci = <span class="dv">1</span>. - ci;
+      <span class="kw">if</span> (ci &gt; <span class="fl">1e-10</span>) {
+	<span class="dt">double</span> ff = t[i]/ci + s*min(<span class="dv">1</span>., <span class="dv">1</span>. - s*un)*gf[i]*Δ/<span class="dv">2</span>.;
+	tflux[] = ff*cf1*uf.x[];
+      }
+      <span class="kw">else</span>
+	tflux[] = <span class="dv">0</span>.;
+    }
+  }
+  <a href="/src/grid/cartesian-common.h#207">delete</a> (gfl); <a href="http://man7.org/linux/man-pages/man3/free.3.html">free</a> (gfl);
+
+<span class="ot">#if TREE</span>
+  <span class="dt">scalar</span> * fluxl = list_concat (NULL, tfluxl);
+  fluxl = list_append (fluxl, flux);
+  <span class="kw">for</span> (<span class="dt">int</span> l = depth() - <span class="dv">1</span>; l &gt;= <span class="dv">0</span>; l--)
+    foreach_halo (prolongation, l) {
+<span class="ot">#if dimension == 1</span>
+      <span class="kw">if</span> (is_refined (neighbor(-<span class="dv">1</span>)))
+	<span class="kw">for</span> (<span class="dt">scalar</span> fl in fluxl)
+	  fl[] = fine(fl);
+      <span class="kw">if</span> (is_refined (neighbor(<span class="dv">1</span>)))
+	<span class="kw">for</span> (<span class="dt">scalar</span> fl in fluxl)
+	  fl[<span class="dv">1</span>] = fine(fl,<span class="dv">2</span>);
+<span class="ot">#elif dimension == 2</span>
+      <span class="kw">if</span> (is_refined (neighbor(-<span class="dv">1</span>)))
+	<span class="kw">for</span> (<span class="dt">scalar</span> fl in fluxl)
+	  fl[] = (fine(fl,<span class="dv">0</span>,<span class="dv">0</span>) + fine(fl,<span class="dv">0</span>,<span class="dv">1</span>))/<span class="dv">2</span>.;
+      <span class="kw">if</span> (is_refined (neighbor(<span class="dv">1</span>)))
+	<span class="kw">for</span> (<span class="dt">scalar</span> fl in fluxl)
+	  fl[<span class="dv">1</span>] = (fine(fl,<span class="dv">2</span>,<span class="dv">0</span>) + fine(fl,<span class="dv">2</span>,<span class="dv">1</span>))/<span class="dv">2</span>.;
+<span class="ot">#else </span><span class="co">// dimension == 3</span>
+      <span class="kw">if</span> (is_refined (neighbor(-<span class="dv">1</span>)))
+	<span class="kw">for</span> (<span class="dt">scalar</span> fl in fluxl)
+	  fl[] = (fine(fl,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>) + fine(fl,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>) +
+		  fine(fl,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>) + fine(fl,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">1</span>))/<span class="dv">4</span>.;
+      <span class="kw">if</span> (is_refined (neighbor(<span class="dv">1</span>)))
+	<span class="kw">for</span> (<span class="dt">scalar</span> fl in fluxl)
+	  fl[<span class="dv">1</span>] = (fine(fl,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">0</span>) + fine(fl,<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">0</span>) +
+		   fine(fl,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">1</span>) + fine(fl,<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">1</span>))/<span class="dv">4</span>.;
+<span class="ot">#endif</span>
+    }
+  <a href="http://man7.org/linux/man-pages/man3/free.3.html">free</a> (fluxl);
+<span class="ot">#endif</span>
+
+  <span class="kw">if</span> (cfl &gt; <span class="fl">0.5</span> + <span class="fl">1e-6</span>)
+    <a href="http://man7.org/linux/man-pages/man3/fprintf.3.html">fprintf</a> (ferr, 
+	     <span class="st">&quot;WARNING: CFL must be &lt;= 0.5 for VOF (cfl - 0.5 = %g)</span><span class="ch">\n</span><span class="st">&quot;</span>, 
+	     cfl - <span class="fl">0.5</span>), <a href="http://man7.org/linux/man-pages/man3/fflush.3.html">fflush</a> (ferr);
+
+  <a href="/Basilisk%20C#iterators"><span class="kw">foreach</span></a>() {
+    c[] += dt*(flux[] - flux[<span class="dv">1</span>] + cc[]*(uf.x[<span class="dv">1</span>] - uf.x[]))/(cm[]*Δ);
+    <span class="dt">scalar</span> t, tflux;
+    <span class="kw">for</span> (t, tflux in tracers, tfluxl)
+      t[] += dt*(tflux[] - tflux[<span class="dv">1</span>])/(cm[]*Δ);
+  }
+  <a href="/Basilisk%20C#boundary-conditions">boundary</a> ({c});
+  <a href="/Basilisk%20C#boundary-conditions">boundary</a> (tracers);
+
+  <a href="/src/grid/cartesian-common.h#207">delete</a> (tfluxl); <a href="http://man7.org/linux/man-pages/man3/free.3.html">free</a> (tfluxl);
+}
+
+<span class="dt">void</span> <a id="vof_advection">vof_advection</a> (<span class="dt">scalar</span> * interfaces, <span class="dt">int</span> i)
+{
+  <span class="kw">for</span> (<span class="dt">scalar</span> c in interfaces) {
+    <span class="dt">scalar</span> cc[];
+    <a href="/Basilisk%20C#iterators"><span class="kw">foreach</span></a>()
+      cc[] = (c[] &gt; <span class="fl">0.5</span>);
+
+    <span class="dt">void</span> (* sweep[dimension]) (<span class="dt">scalar</span>, <span class="dt">scalar</span>);
+    <span class="dt">int</span> d = <span class="dv">0</span>;
+    <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+      sweep[d++] = <a href="vof-3p.h#sweep_x">sweep_x</a>;
+    <a href="/Basilisk%20C#boundary-conditions">boundary</a> ({c});
+    <span class="kw">for</span> (d = <span class="dv">0</span>; d &lt; dimension; d++)
+      sweep[(i + d) % dimension] (c, cc);
+  }
+}
+
+<a href="/Basilisk%20C#events"><span class="dt">event</span></a> vof (i++)
+  vof_advection (interfaces, i);</code></pre></div
+>
+  <script type="text/javascript">
+    CodeMirror.keyMap.emacs.Enter = "newlineAndIndent";
+    CodeMirror.extendMode("clike", {electricChars: "{};"});
+    var editor = 
+    	CodeMirror.fromTextArea(document.getElementById("editedText"), {
+          matchBrackets: true,
+          mode: "text/x-basiliskc",
+	  theme: "basilisk",
+          tabSize: 8,
+	  electricChars: true,
+	  lineWrapping: true,
+          foldGutter: true,
+          keyMap: "emacs",
+      	  extraKeys: {
+            "F11": function(cm) {
+              cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+            },
+	    "Esc": function(cm) {
+              if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+            },
+	    "Ctrl-E": function(cm){ cm.foldCode(cm.getCursor()); }
+          },
+	  gutters: ["CodeMirror-foldgutter"]
+        });
+    editor.on("blur", function() {editor.save()});
+    update();
+    var pending;
+    editor.on("change", function() {
+	clearTimeout(pending);
+	pending = setTimeout(update, 400);
+    });
+    function looksLikeBasiliskC(code) {
+	return /^[/][*][*]/.test(code);
+    }
+    function update() {
+	editor.setOption("mode", looksLikeBasiliskC(editor.getValue()) ? 
+			 "text/x-basiliskc" : "markdown");
+    }
+  </script>
+</div>
+            <div id="footer">powered by <a href="http://github.com/jgm/gitit/tree/master/">darcsit</a></div>
+          </div>
+        </div>
+        <div id="sidebar" class="yui-b first">
+          <div id="logo">
+  <a href="/" alt="site logo" title="Go to top page"><img src="/img/logo.png" /></a>
+</div>
+                      <div class="sitenav">
+  <fieldset>
+    <legend>Site</legend>
+    <ul>
+      <li><a href="/">Front page</a></li>
+      <li><a href="/_index">All pages</a></li>
+      <li><a href="/_activity">Recent activity</a></li>
+              <li><a href="/_upload">Upload a file</a></li>
+      
+      
+      <li><a href="/Help">Help</a></li>
+    </ul>
+    <form action="/_search" method="post" id="searchform">
+     <input type="text" name="patterns" id="patterns"/>
+     <input type="submit" name="search" id="search" value="Search"/>
+    </form>
+  </fieldset>
+  <fieldset>
+    <legend>Documentation</legend>
+    <ul>
+      <li><a href="/Tutorial">Tutorial</a></li>
+      <li><a href="/src/INSTALL">Installation</a></li>
+      <li><a href="/Basilisk C">Basilisk C</a></li>
+      <li><a href="/src/README">Solvers and functions</a></li>
+      <li><a href="/src/examples/README">Examples</a></li>
+      <li><a href="http://groups.google.com/d/forum/basilisk-fr">User forum</a></li>
+    </ul>
+  </fieldset>
+  <fieldset>
+    <legend>Development</legend>
+    <ul>
+      <li><a href="/src/">Source code</a></li>
+      <li><a href="https://hub.darcs.net/basilisk/basilisk/browse/src">Darcs Hub</a></li>
+      <li><a href="/src/test/README">Test cases</a></li>
+      <li><a href="/sandbox/bugs/README">Bug reports</a></li>
+      <li><a href="/sandbox/">Play in the sandbox</a></li>
+    </ul>
+  </fieldset>
+</div>
+          
+                      <div class="pageTools">
+  <fieldset>
+    <legend>This page</legend>
+    <ul>
+      <li><a href="/_showraw/sandbox/chizari/threephase/vof-3p.h">Raw page source</a></li>
+      <li><a href="/sandbox/chizari/threephase/vof-3p.h?printable">Printable version</a></li>
+      <li><a href="/_delete/sandbox/chizari/threephase/vof-3p.h">Delete this page</a></li>
+      
+    </ul>
+    
+  </fieldset>
+</div>
+          
+          
+        </div>
+    </div>
+    <script src="/js/jquery.min.js" type="text/javascript"
+></script
+><script src="/js/jquery-ui.packed.js" type="text/javascript"
+></script
+><script src="/js/footnotes.js" type="text/javascript"
+></script
+><script src="/js/MathMLinHTML.js" type="text/javascript"
+></script
+>
+    <script type="text/javascript" src="/js/jquery.hotkeys-0.7.9.min.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+     $(document).bind("keydown", "ctrl+r", function() {
+         $.post("/_expire/sandbox/chizari/threephase/vof-3p.h");
+         return true;
+         });
+/* ]]> */
+</script>
+
+    <script type="text/javascript">
+/* <![CDATA[ */
+  $.get("/_user", {}, function(username, status) {
+     $("#logged_in_user").text(username);
+     if (username == "") {  // nobody logged in
+        $("#logoutlink").hide();
+        $("#loginlink").show();
+     } else {
+        $("#logoutlink").show();
+        $("#loginlink").hide();
+     };
+   });
+/* ]]> */
+</script>
+  </body>
+</html>

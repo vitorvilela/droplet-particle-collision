@@ -1,0 +1,597 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    
+    
+    <title>Basilisk - sandbox/chizari/threephase/fractions.h</title>
+        <link href="/css/custom.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="/css/print.css" rel="stylesheet" media="print" type= "text/css" />
+    
+    <!--[if IE]><link href="/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
+    <link rel="stylesheet" href="/css/codemirror.css"/>
+    <link rel="stylesheet" href="/css/basilisk.css"/>
+    <link rel="stylesheet" href="/codemirror/addon/display/fullscreen.css"/>
+    <link rel="stylesheet" href="/codemirror/addon/fold/foldgutter.css" />
+    <script src="/codemirror/lib/codemirror.js"></script>
+    <script src="/codemirror/mode/clike/clike.js"></script>
+    <script src="/codemirror/mode/markdown/markdown.js"></script>
+    <script src="/codemirror/addon/display/fullscreen.js"></script>
+    <script src="/codemirror/addon/edit/matchbrackets.js"></script>
+    <script src="/codemirror/keymap/emacs.js"></script>
+    <script src="/codemirror/addon/comment/comment.js"></script>
+    <script src="/codemirror/addon/dialog/dialog.js"></script>
+    <script src="/codemirror/addon/search/searchcursor.js"></script>
+    <script src="/codemirror/addon/search/search.js"></script>
+
+    <script src="/codemirror/addon/fold/foldcode.js"></script>
+    <script src="/codemirror/addon/fold/foldgutter.js"></script>
+    <script src="/codemirror/addon/fold/brace-fold.js"></script>
+    <script src="/codemirror/addon/fold/xml-fold.js"></script>
+    <script src="/codemirror/addon/fold/markdown-fold.js"></script>
+    <script src="/codemirror/addon/fold/comment-fold.js"></script>
+  </head>
+  <body>
+    <div id="doc3" class="yui-t1">
+        <div id="yui-main">
+          <div id="maincol" class="yui-b">
+            <div id="userbox">
+  <noscript>
+    <a href="/_login">Login</a>
+    <a href="/_logout">Logout</a>
+  </noscript>
+  &nbsp;
+  <a id="loginlink" class="login" href="/_login">Login / Get an account</a>
+  <a id="logoutlink" class="login" href="/_logout">Logout <span id="logged_in_user"></span></a>
+</div>
+            <ul class="tabs"
+><li class="selected"
+  ><a href="/sandbox/chizari/threephase/fractions.h"
+    >view</a
+    ></li
+  ><li
+  ><a href="/_edit/sandbox/chizari/threephase/fractions.h"
+    >edit</a
+    ></li
+  ><li
+  ><a href="/_history/sandbox/chizari/threephase/fractions.h"
+    >history</a
+    ></li
+  ><li
+  ><a href="/_discuss/sandbox/chizari/threephase/fractions.h"
+    >discuss</a
+    ></li
+  ></ul
+> 
+            <div id="content">
+  
+  <h1 class="pageTitle"><a href="/sandbox/chizari/threephase/fractions.h">sandbox/chizari/threephase/fractions.h</a></h1>
+      <ul class="messages">
+  
+</ul>
+  
+  <div id="wikipage"
+><div id="TOC">
+<ul>
+<li><a href="#normal-approximation-using-myc-or-face-fractions">Normal approximation using MYC or face fractions</a></li>
+</ul>
+</div>
+
+<p>The interface reconstruction is modified here, in order to deal with the two-phase cells in the three-phase flow simulation.</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec"><span class="ot">#include &quot;<a href="/src/geometry.h">geometry.h</a>&quot;</span>
+<span class="ot">#if dimension == 1</span>
+coord <a id="mycs">mycs</a>(Point point, <span class="dt">scalar</span> c)
+{
+    coord n = {<span class="dv">1</span>.};
+    <span class="kw">return</span> n;
+}
+<span class="ot">#elif dimension == 2</span>
+<span class="ot">#include &quot;<a href="/src/myc2d.h">myc2d.h</a>&quot;</span>
+<span class="ot">#else </span><span class="co">// dimension == 3</span>
+<span class="ot">#include &quot;<a href="/src/myc.h">myc.h</a>&quot;</span>
+<span class="ot">#endif</span>
+
+<span class="ot">#if TREE</span>
+
+<span class="dt">void</span> <a id="fraction_refine">fraction_refine</a>(Point point, <span class="dt">scalar</span> c)
+{
+    <span class="dt">double</span> cc = c[];
+    <span class="kw">if</span> (cc &lt;= <span class="dv">0</span>. || cc &gt;= <span class="dv">1</span>.)
+        foreach_child()
+            c[] = cc;
+    <span class="kw">else</span>
+    {
+        coord n = <a href="fractions.h#mycs">mycs</a>(point, c);
+        <span class="dt">double</span> α = <a href="/src/geometry.h#plane_alpha">plane_alpha</a>(cc, n);
+        coord a, b;
+        <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+        {
+            a.x = <span class="dv">0</span>.;
+            b.x = <span class="fl">0.5</span>;
+        }
+        foreach_child()
+        {
+            coord nc;
+            <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+                nc.x = child.x * n.x;
+            c[] = <a href="/src/geometry.h#rectangle_fraction">rectangle_fraction</a>(nc, α, a, b);
+        }
+    }
+}
+
+<a href="/Basilisk%20C#field-attributes">attribute</a>
+{
+    <span class="dt">vector</span> n;
+}
+
+<span class="dt">static</span> <span class="dt">void</span> <a id="alpha_refine">alpha_refine</a>(Point point, <span class="dt">scalar</span> alpha)
+{
+    <span class="dt">vector</span> n = α.n;
+    <span class="dt">double</span> alphac = <span class="dv">2</span>. * α[];
+    coord m;
+    <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+        m.x = n.x[];
+    foreach_child()
+    {
+        α[] = alphac;
+        <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+            α[] -= child.x * m.x / <span class="dv">2</span>.;
+    }
+}
+
+<span class="ot">#endif </span><span class="co">// TREE</span>
+
+<span class="kw">struct</span> Fractions
+{
+    <a href="/Basilisk%20C#face-and-vertex-fields">vertex</a> <span class="dt">scalar</span> Φ; <span class="co">// compulsory</span>
+    <span class="dt">scalar</span> c;          <span class="co">// compulsory</span>
+    <a href="/Basilisk%20C#face-and-vertex-fields">face</a> <span class="dt">vector</span> s;     <span class="co">// optional</span>
+};
+
+<a href="/Basilisk%20C#tracing-and-profiling">trace</a> <span class="dt">void</span> <a id="fractions">fractions</a>(<span class="kw">struct</span> Fractions a)
+{
+    <a href="/Basilisk%20C#face-and-vertex-fields">vertex</a> <span class="dt">scalar</span> Φ = a.Φ;
+    <span class="dt">scalar</span> c = a.c;
+    <a href="/Basilisk%20C#face-and-vertex-fields">face</a> <span class="dt">vector</span> s = automatic(a.s);
+
+<span class="ot">#if dimension == 3</span>
+    <span class="dt">vector</span> p[];
+<span class="ot">#else </span><span class="co">// dimension == 2</span>
+    <span class="dt">vector</span> p;
+    p.x = s.y;
+    p.y = s.x;
+<span class="ot">#endif</span>
+
+    foreach_edge()
+    {
+        <span class="kw">if</span> (Φ[] * Φ[<span class="dv">1</span>] &lt; <span class="dv">0</span>.)
+        {
+            p.x[] = Φ[] / (Φ[] - Φ[<span class="dv">1</span>]);
+            <span class="kw">if</span> (Φ[] &lt; <span class="dv">0</span>.)
+                p.x[] = <span class="dv">1</span>. - p.x[];
+        }
+        <span class="kw">else</span>
+            p.x[] = (Φ[] &gt; <span class="dv">0</span>. || Φ[<span class="dv">1</span>] &gt; <span class="dv">0</span>.);
+    }
+
+<span class="ot">#if dimension == 3</span>
+    <span class="dt">scalar</span> s_x = s.x, s_y = s.y, s_z = s.z;
+    <a href="/Basilisk%20C#foreach_face"><span class="kw">foreach_face</span></a>(z, x, y)
+<span class="ot">#else </span><span class="co">// dimension == 2</span>
+    boundary_flux({s});
+    <span class="dt">scalar</span> s_z = c;
+    <a href="/Basilisk%20C#iterators"><span class="kw">foreach</span></a> ()
+<span class="ot">#endif</span>
+    {
+        coord n;
+        <span class="dt">double</span> nn = <span class="dv">0</span>.;
+        <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>(<span class="dv">2</span>)
+        {
+            n.x = p.y[] - p.y[<span class="dv">1</span>];
+            nn += fabs(n.x);
+        }
+        <span class="kw">if</span> (nn == <span class="dv">0</span>.)
+            s_z[] = p.x[];
+        <span class="kw">else</span>
+        {
+            <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>(<span class="dv">2</span>)
+                n.x /= nn;
+            <span class="dt">double</span> α = <span class="dv">0</span>., ni = <span class="dv">0</span>.;
+            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt;= <span class="dv">1</span>; i++)
+            {
+                <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>(<span class="dv">2</span>)
+                <span class="kw">if</span> (p.x[<span class="dv">0</span>, i] &gt; <span class="dv">0</span>. &amp;&amp; p.x[<span class="dv">0</span>, i] &lt; <span class="dv">1</span>.)
+                {
+                    <span class="dt">double</span> a = sign(Φ[<span class="dv">0</span>, i]) * (p.x[<span class="dv">0</span>, i] - <span class="fl">0.5</span>);
+                    α += n.x * a + n.y * (i - <span class="fl">0.5</span>);
+                    ni++;
+                }
+            }
+            s_z[] = ni ? <a href="/src/geometry.h#line_area">line_area</a>(n.x, n.y, α / ni) : max(p.x[], p.y[]);
+        }
+    }
+
+<span class="ot">#if dimension == 3</span>
+    boundary_flux({s});
+    <a href="/Basilisk%20C#iterators"><span class="kw">foreach</span></a> ()
+    {
+        coord n;
+        <span class="dt">double</span> nn = <span class="dv">0</span>.;
+        <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>(<span class="dv">3</span>)
+        {
+            n.x = s.x[] - s.x[<span class="dv">1</span>];
+            nn += fabs(n.x);
+        }
+        <span class="kw">if</span> (nn == <span class="dv">0</span>.)
+            c[] = s.x[];
+        <span class="kw">else</span>
+        {
+            <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>(<span class="dv">3</span>)
+                n.x /= nn;
+            <span class="dt">double</span> α = <span class="dv">0</span>., ni = <span class="dv">0</span>.;
+            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt;= <span class="dv">1</span>; i++)
+                <span class="kw">for</span> (<span class="dt">int</span> j = <span class="dv">0</span>; j &lt;= <span class="dv">1</span>; j++)
+                    <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>(<span class="dv">3</span>)
+                    <span class="kw">if</span> (p.x[<span class="dv">0</span>, i, j] &gt; <span class="dv">0</span>. &amp;&amp; p.x[<span class="dv">0</span>, i, j] &lt; <span class="dv">1</span>.)
+                    {
+                        <span class="dt">double</span> a = sign(Φ[<span class="dv">0</span>, i, j]) * (p.x[<span class="dv">0</span>, i, j] - <span class="fl">0.5</span>);
+                        α += n.x * a + n.y * (i - <span class="fl">0.5</span>) + n.z * (j - <span class="fl">0.5</span>);
+                        ni++;
+                    }
+            c[] = ni ? <a href="/src/geometry.h#plane_volume">plane_volume</a>(n, α / ni) : s.x[];
+        }
+    }
+<span class="ot">#endif</span>
+    <a href="/Basilisk%20C#boundary-conditions">boundary</a>({c});
+}
+
+<span class="ot">#define fraction(f, func)    \</span>
+    <span class="kw">do</span>                       \
+    {                        \
+        <a href="/Basilisk%20C#face-and-vertex-fields">vertex</a> <span class="dt">scalar</span> φ[]; \
+        <a href="/Basilisk%20C#foreach_vertex"><span class="kw">foreach_vertex</span></a>()     \
+            φ[] = func;    \
+        <a href="fractions.h#fractions">fractions</a>(φ, f);   \
+    } <span class="kw">while</span> (<span class="dv">0</span>)
+
+coord <a id="youngs_normal">youngs_normal</a>(Point point, <span class="dt">scalar</span> c)
+{
+    coord n;
+    <span class="dt">double</span> nn = <span class="dv">0</span>.;
+    <a href="http://man7.org/linux/man-pages/man3/assert.3.html">assert</a>(dimension == <span class="dv">2</span>);
+    <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+    {
+        n.x = (c[-<span class="dv">1</span>, <span class="dv">1</span>] + <span class="dv">2</span>. * c[-<span class="dv">1</span>, <span class="dv">0</span>] + c[-<span class="dv">1</span>, -<span class="dv">1</span>] - c[+<span class="dv">1</span>, <span class="dv">1</span>] - <span class="dv">2</span>. * c[+<span class="dv">1</span>, <span class="dv">0</span>] - c[+<span class="dv">1</span>, -<span class="dv">1</span>]);
+        nn += fabs(n.x);
+    }
+    <span class="co">// normalize</span>
+    <span class="kw">if</span> (nn &gt; <span class="dv">0</span>.)
+        <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+            n.x /= nn;
+    <span class="kw">else</span> <span class="co">// this is a small fragment</span>
+        n.x = <span class="dv">1</span>.;
+    <span class="kw">return</span> n;
+}</code></pre>
+<h3 id="normal-approximation-using-myc-or-face-fractions"><a href="#normal-approximation-using-myc-or-face-fractions">Normal approximation using MYC or face fractions</a></h3>
+<pre class="sourceCode literatec"><code class="sourceCode literatec">coord <a id="facet_normal">facet_normal</a> (Point point, <span class="dt">scalar</span> c, face <span class="dt">vector</span> s)
+{
+  coord n;
+  <span class="kw">if</span> (s.x.i &lt; <span class="dv">0</span>)
+    n = <a href="fractions.h#mycs">mycs</a> (point, c);
+  <span class="kw">else</span> { <span class="co">// compute normal from face fractions</span>
+    <span class="dt">double</span> nn = <span class="dv">0</span>.;
+    <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>() {
+      n.x = s.x[] - s.x[<span class="dv">1</span>];
+      nn += fabs(n.x);
+    }
+    <a href="http://man7.org/linux/man-pages/man3/assert.3.html">assert</a> (nn &gt; <span class="dv">0</span>.);
+    <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+      n.x /= nn;
+  }
+  <span class="kw">return</span> n;
+}</code></pre>
+<p>Here is part that is modified for the three-phase flow simulation.</p>
+<p>The reconstruction function takes a volume fraction field <code>c</code> and returns the corresponding normal vector field <code>n</code> and intercept field <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mi>α</mi></mrow></math>.</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec"><a href="/Basilisk%20C#tracing-and-profiling">trace</a> <span class="dt">void</span> <a id="reconstruction">reconstruction</a>(<span class="dt">const</span> <span class="dt">scalar</span> c, <span class="dt">vector</span> n, <span class="dt">scalar</span> alpha)
+{
+    <a href="/Basilisk%20C#iterators"><span class="kw">foreach</span></a> ()
+    {
+        <span class="kw">if</span> (c[] &lt;= <span class="dv">0</span>. || c[] &gt;= <span class="dv">1</span>.)
+        {
+            α[] = <span class="dv">0</span>.;
+            <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+                n.x[] = <span class="dv">0</span>.;
+        }
+        <span class="kw">else</span>
+        {</code></pre>
+<p>Change to one interface for two-phase cells of the three-phase flow simulation, instead of having two not necessarily same interface for the two-phase cells. It should be mentioned that only around the triple point we might have some two-phase flow cells with two different normals for the interface.</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec">            coord m1, m2, m1f, m2f, m, ma;
+            <span class="dt">double</span> sum;
+            <span class="dt">char</span> flag = 'n';</code></pre>
+<p>First the interface normal is determined as follow,</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec">            m = mycs(point, c);</code></pre>
+<p>Chesking which phases are in the cell and then calculate the interface normals,</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec">            <span class="kw">if</span> (f1[] == <span class="dv">0</span>. &amp;&amp; f2[] &gt; <span class="dv">0</span>. &amp;&amp; f2[] &lt; <span class="dv">1</span>. &amp;&amp; f3[] &gt; <span class="dv">0</span>. &amp;&amp; f3[] &lt; <span class="dv">1</span>.)
+            {
+                m1 = <a href="fractions.h#mycs">mycs</a>(point, f2);
+                m2 = <a href="fractions.h#mycs">mycs</a>(point, f3);</code></pre>
+<p>Also, we are calculating the volumetric portion of each interface normal,</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec">                <span class="kw">foreach_dimension</span>()
+                {
+                    m1f.x = m1.x * f2[];
+                    m2f.x = m2.x * f3[];
+                }
+                flag = 'y';
+            }
+            <span class="kw">else</span> <span class="kw">if</span> (f2[] == <span class="dv">0</span>. &amp;&amp; f3[] &gt; <span class="dv">0</span>. &amp;&amp; f3[] &lt; <span class="dv">1</span>. &amp;&amp; f1[] &gt; <span class="dv">0</span>. &amp;&amp; f1[] &lt; <span class="dv">1</span>.)
+            {
+                m1 = <a href="fractions.h#mycs">mycs</a>(point, f3);
+                m2 = <a href="fractions.h#mycs">mycs</a>(point, f1);
+                <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+                {
+                    m1f.x = m1.x * f3[];
+                    m2f.x = m2.x * f1[];
+                }
+                flag = 'y';
+            }
+            <span class="kw">else</span> <span class="kw">if</span> (f3[] == <span class="dv">0</span>. &amp;&amp; f1[] &gt; <span class="dv">0</span>. &amp;&amp; f1[] &lt; <span class="dv">1</span>. &amp;&amp; f2[] &gt; <span class="dv">0</span>. &amp;&amp; f2[] &lt; <span class="dv">1</span>.)
+            {
+                m1 = <a href="fractions.h#mycs">mycs</a>(point, f1);
+                m2 = <a href="fractions.h#mycs">mycs</a>(point, f2);
+                <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+                {
+                    m1f.x = m1.x * f1[];
+                    m2f.x = m2.x * f2[];
+                }
+                flag = 'y';
+            }</code></pre>
+<p>After all the combinations are checked, we will find which interface is now being calculated as <em>c</em> in the reconstruction function; and, we find the other interface and reverse it for the averaging process.</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec">            <span class="kw">if</span> (flag == 'y')
+            {
+                <span class="kw">if</span> (fabs(m1.x - m.x) &lt; <span class="fl">1.0e-6</span> &amp;&amp; fabs(m1.y - m.y) &lt; <span class="fl">1.0e-6</span>)
+                {
+                    <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+                        m2f.x *= -<span class="fl">1.0</span>;
+                }
+                <span class="kw">else</span> <span class="kw">if</span> (fabs(m2.x - m.x) &lt; <span class="fl">1.0e-6</span> &amp;&amp; fabs(m2.y - m.y) &lt; <span class="fl">1.0e-6</span>)
+                {
+                    <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+                        m1f.x *= -<span class="fl">1.0</span>;
+                }
+                <span class="kw">else</span>
+                {
+                    <a href="http://man7.org/linux/man-pages/man3/printf.3.html">printf</a> (<span class="st">&quot;error in finding the interface</span><span class="ch">\r\n</span><span class="st">&quot;</span>);
+                }</code></pre>
+<p>Performing the volume average for the interface normals,</p>
+<pre class="sourceCode literatec"><code class="sourceCode literatec">                <span class="kw">foreach_dimension</span>()
+                    ma.x = m1f.x + m2f.x;
+                sum = <span class="fl">0.0</span>;
+                <span class="kw">foreach_dimension</span>()
+                    sum += fabs(ma.x);
+                <span class="kw">foreach_dimension</span>()
+                    ma.x /= sum;
+                 <span class="kw">foreach_dimension</span>()
+                    m.x = ma.x;
+            }
+            <span class="kw">foreach_dimension</span>()
+                n.x[] = m.x;
+            α[] = plane_alpha(c[], m);
+        }
+    }
+
+<span class="ot">#if TREE</span>
+    <span class="kw">foreach_dimension</span>()
+        n.x.refine = n.x.prolongation = <a href="/src/grid/multigrid-common.h#188">refine_injection</a>;
+    α.n = n;
+    α.refine = α.prolongation = <a href="fractions.h#alpha_refine">alpha_refine</a>;
+<span class="ot">#endif</span>
+    boundary({n, alpha});
+}
+
+<span class="kw">struct</span> OutputFacets
+{
+    <span class="dt">scalar</span> c;
+    FILE *fp;      <span class="co">// optional: default is stdout</span>
+    <a href="/Basilisk%20C#face-and-vertex-fields">face</a> <span class="dt">vector</span> s; <span class="co">// optional: default is none</span>
+};
+
+<a href="/Basilisk%20C#tracing-and-profiling">trace</a> <span class="dt">void</span> <a id="output_facets">output_facets</a>(<span class="kw">struct</span> OutputFacets p)
+{
+    <span class="dt">scalar</span> c = p.c;
+    <a href="/Basilisk%20C#face-and-vertex-fields">face</a> <span class="dt">vector</span> s = p.s;
+    <span class="kw">if</span> (!p.fp)
+        p.fp = <a href="http://man7.org/linux/man-pages/man3/stdout.3.html">stdout</a>;
+
+    <a href="/Basilisk%20C#iterators"><span class="kw">foreach</span></a> ()
+        <span class="kw">if</span> (c[] &gt; <span class="fl">1e-6</span> &amp;&amp; c[] &lt; <span class="dv">1</span>. - <span class="fl">1e-6</span>)
+        {
+            coord n;
+            <span class="kw">if</span> (!s.x.i)
+                <span class="co">// compute normal from volume fraction</span>
+                n = <a href="fractions.h#mycs">mycs</a>(point, c);
+            <span class="kw">else</span>
+            {
+                <span class="co">// compute normal from face fractions</span>
+                <span class="dt">double</span> nn = <span class="dv">0</span>.;
+                <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+                {
+                    n.x = s.x[] - s.x[<span class="dv">1</span>];
+                    nn += fabs(n.x);
+                }
+                <a href="http://man7.org/linux/man-pages/man3/assert.3.html">assert</a>(nn &gt; <span class="dv">0</span>.);
+                <a href="/Basilisk%20C#foreach_dimension"><span class="kw">foreach_dimension</span></a>()
+                    n.x /= nn;
+            }
+            <span class="dt">double</span> α = <a href="/src/geometry.h#plane_alpha">plane_alpha</a>(c[], n);
+<span class="ot">#if dimension == 2</span>
+            coord segment[<span class="dv">2</span>];
+            <span class="kw">if</span> (<a href="/src/geometry.h#facets">facets</a>(n, α, segment) == <span class="dv">2</span>)
+                <a href="http://man7.org/linux/man-pages/man3/fprintf.3.html">fprintf</a>(p.fp, <span class="st">&quot;%g %g</span><span class="ch">\n</span><span class="st">%g %g</span><span class="ch">\n\n</span><span class="st">&quot;</span>,
+                        x + segment[<span class="dv">0</span>].x * Δ, y + segment[<span class="dv">0</span>].y * Δ,
+                        x + segment[<span class="dv">1</span>].x * Δ, y + segment[<span class="dv">1</span>].y * Δ);
+<span class="ot">#else </span><span class="co">// dimension == 3</span>
+            coord v[<span class="dv">12</span>];
+            <span class="dt">int</span> m = <a href="/src/geometry.h#facets">facets</a>(n, α, v, <span class="dv">1</span>.);
+            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; m; i++)
+                <a href="http://man7.org/linux/man-pages/man3/fprintf.3.html">fprintf</a>(p.fp, <span class="st">&quot;%g %g %g</span><span class="ch">\n</span><span class="st">&quot;</span>,
+                        x + v[i].x * Δ, y + v[i].y * Δ, z + v[i].z * Δ);
+            <span class="kw">if</span> (m &gt; <span class="dv">0</span>)
+                fputc(<span class="ch">'\n'</span>, p.fp);
+<span class="ot">#endif</span>
+        }
+
+    <a href="http://man7.org/linux/man-pages/man3/fflush.3.html">fflush</a>(p.fp);
+}
+
+<a href="/Basilisk%20C#tracing-and-profiling">trace</a> <span class="dt">double</span> <a id="interface_area">interface_area</a>(<span class="dt">scalar</span> c)
+{
+    <span class="dt">double</span> area = <span class="dv">0</span>.;
+    <a href="/Basilisk%20C#iterators"><span class="kw">foreach</span></a> ()
+        <span class="kw">if</span> (c[] &gt; <span class="fl">1e-6</span> &amp;&amp; c[] &lt; <span class="dv">1</span>. - <span class="fl">1e-6</span>)
+        {
+            coord n = <a href="fractions.h#mycs">mycs</a>(point, c), p;
+            <span class="dt">double</span> α = <a href="/src/geometry.h#plane_alpha">plane_alpha</a>(c[], n);
+            area += pow(Δ, dimension - <span class="dv">1</span>) * <a href="/src/geometry.h#plane_area_center">plane_area_center</a>(n, α, &amp;p);
+        }
+    <span class="kw">return</span> area;
+}</code></pre></div
+>
+  <script type="text/javascript">
+    CodeMirror.keyMap.emacs.Enter = "newlineAndIndent";
+    CodeMirror.extendMode("clike", {electricChars: "{};"});
+    var editor = 
+    	CodeMirror.fromTextArea(document.getElementById("editedText"), {
+          matchBrackets: true,
+          mode: "text/x-basiliskc",
+	  theme: "basilisk",
+          tabSize: 8,
+	  electricChars: true,
+	  lineWrapping: true,
+          foldGutter: true,
+          keyMap: "emacs",
+      	  extraKeys: {
+            "F11": function(cm) {
+              cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+            },
+	    "Esc": function(cm) {
+              if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+            },
+	    "Ctrl-E": function(cm){ cm.foldCode(cm.getCursor()); }
+          },
+	  gutters: ["CodeMirror-foldgutter"]
+        });
+    editor.on("blur", function() {editor.save()});
+    update();
+    var pending;
+    editor.on("change", function() {
+	clearTimeout(pending);
+	pending = setTimeout(update, 400);
+    });
+    function looksLikeBasiliskC(code) {
+	return /^[/][*][*]/.test(code);
+    }
+    function update() {
+	editor.setOption("mode", looksLikeBasiliskC(editor.getValue()) ? 
+			 "text/x-basiliskc" : "markdown");
+    }
+  </script>
+</div>
+            <div id="footer">powered by <a href="http://github.com/jgm/gitit/tree/master/">darcsit</a></div>
+          </div>
+        </div>
+        <div id="sidebar" class="yui-b first">
+          <div id="logo">
+  <a href="/" alt="site logo" title="Go to top page"><img src="/img/logo.png" /></a>
+</div>
+                      <div class="sitenav">
+  <fieldset>
+    <legend>Site</legend>
+    <ul>
+      <li><a href="/">Front page</a></li>
+      <li><a href="/_index">All pages</a></li>
+      <li><a href="/_activity">Recent activity</a></li>
+              <li><a href="/_upload">Upload a file</a></li>
+      
+      
+      <li><a href="/Help">Help</a></li>
+    </ul>
+    <form action="/_search" method="post" id="searchform">
+     <input type="text" name="patterns" id="patterns"/>
+     <input type="submit" name="search" id="search" value="Search"/>
+    </form>
+  </fieldset>
+  <fieldset>
+    <legend>Documentation</legend>
+    <ul>
+      <li><a href="/Tutorial">Tutorial</a></li>
+      <li><a href="/src/INSTALL">Installation</a></li>
+      <li><a href="/Basilisk C">Basilisk C</a></li>
+      <li><a href="/src/README">Solvers and functions</a></li>
+      <li><a href="/src/examples/README">Examples</a></li>
+      <li><a href="http://groups.google.com/d/forum/basilisk-fr">User forum</a></li>
+    </ul>
+  </fieldset>
+  <fieldset>
+    <legend>Development</legend>
+    <ul>
+      <li><a href="/src/">Source code</a></li>
+      <li><a href="https://hub.darcs.net/basilisk/basilisk/browse/src">Darcs Hub</a></li>
+      <li><a href="/src/test/README">Test cases</a></li>
+      <li><a href="/sandbox/bugs/README">Bug reports</a></li>
+      <li><a href="/sandbox/">Play in the sandbox</a></li>
+    </ul>
+  </fieldset>
+</div>
+          
+                      <div class="pageTools">
+  <fieldset>
+    <legend>This page</legend>
+    <ul>
+      <li><a href="/_showraw/sandbox/chizari/threephase/fractions.h">Raw page source</a></li>
+      <li><a href="/sandbox/chizari/threephase/fractions.h?printable">Printable version</a></li>
+      <li><a href="/_delete/sandbox/chizari/threephase/fractions.h">Delete this page</a></li>
+      
+    </ul>
+    
+  </fieldset>
+</div>
+          
+          
+        </div>
+    </div>
+    <script src="/js/jquery.min.js" type="text/javascript"
+></script
+><script src="/js/jquery-ui.packed.js" type="text/javascript"
+></script
+><script src="/js/footnotes.js" type="text/javascript"
+></script
+><script src="/js/MathMLinHTML.js" type="text/javascript"
+></script
+>
+    <script type="text/javascript" src="/js/jquery.hotkeys-0.7.9.min.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+     $(document).bind("keydown", "ctrl+r", function() {
+         $.post("/_expire/sandbox/chizari/threephase/fractions.h");
+         return true;
+         });
+/* ]]> */
+</script>
+
+    <script type="text/javascript">
+/* <![CDATA[ */
+  $.get("/_user", {}, function(username, status) {
+     $("#logged_in_user").text(username);
+     if (username == "") {  // nobody logged in
+        $("#logoutlink").hide();
+        $("#loginlink").show();
+     } else {
+        $("#logoutlink").show();
+        $("#loginlink").hide();
+     };
+   });
+/* ]]> */
+</script>
+  </body>
+</html>
